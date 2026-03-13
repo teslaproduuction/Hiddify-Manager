@@ -16,6 +16,15 @@ with open("/opt/hiddify-manager/current.json") as f:
     configs["chconfigs"] = {int(k): v for k, v in configs["chconfigs"].items()}
     configs["hconfigs"] = configs["chconfigs"][0]
 
+sys.path.insert(0, "/opt/hiddify-manager/common")
+try:
+    from parse_proxy_link import parse_proxy_link as _parse_proxy_link
+    _tunnel_link = configs["hconfigs"].get("tunnel_link", "")
+    configs["tunnel_config"] = _parse_proxy_link(_tunnel_link) if _tunnel_link else None
+except Exception as _e:
+    print(f"Warning: could not parse tunnel_link: {_e}", file=sys.stderr)
+    configs["tunnel_config"] = None
+
 
 def exec(command):
     try:

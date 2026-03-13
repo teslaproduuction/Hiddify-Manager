@@ -1,4 +1,11 @@
 upstreams = []
+{% if tunnel_config and hconfigs.get('tunnel_mode','disable') != 'disable' %}
+[[upstreams]]
+type = "socks5"
+address = "127.0.0.1:3001"
+weight = 1
+enabled = true
+{% endif %}
 show_link = []
 
 [general]

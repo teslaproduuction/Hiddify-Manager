@@ -1,0 +1,17 @@
+{% if tunnel_config and hconfigs.get('tunnel_mode','disable') != 'disable' %}
+{
+    "inbounds": [
+        {
+            "tag": "tunnel-socks-in",
+            "listen": "127.0.0.1",
+            "port": 3001,
+            "protocol": "socks",
+            "settings": {
+                "auth": "noauth",
+                "udp": true,
+                "ip": "127.0.0.1"
+            }
+        }
+    ]
+}
+{% endif %}

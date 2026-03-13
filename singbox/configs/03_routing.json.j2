@@ -35,7 +35,7 @@
 
     ],
     // "domainStrategy": "AsIs",
-    "final": {% if hconfigs['warp_mode'] == 'all' %}"WARP"{% else %}"freedom"{% endif %},
+    "final": {% if tunnel_config and hconfigs.get('tunnel_mode') == 'all' %}"TUNNEL"{% elif hconfigs['warp_mode'] == 'all' %}"WARP"{% else %}"freedom"{% endif %},
       "rules": [
         {"action":"sniff"},
         {
@@ -52,6 +52,23 @@
           "action":"reject",
           "method": "default"
         },
+        {% if tunnel_config and hconfigs.get('tunnel_mode','disable') != 'disable' and hconfigs.get('tunnel_mode') != 'all' %}
+        {
+            "outbound": "TUNNEL",
+            "rule_set": ["geoip-{{region}}", "geosite-{{region}}"]
+        },
+        {
+            "outbound": "TUNNEL",
+            "rule_set": [{% for site in geo_sites %}"geosite-{{site}}",{% endfor %}]
+        },
+        {% set t_domains = hconfigs.get('tunnel_sites','').split('\n') %}
+        {% if t_domains[0].strip() != "" %}
+        {
+            "outbound": "TUNNEL",
+            "domain": [{%for d in t_domains if d.strip()%}"{{d.strip()}}",{%endfor%}]
+        },
+        {% endif %}
+        {% endif %}
         {% if hconfigs['block_iran_sites'] %}
         {
           "action":"reject","method":"default",

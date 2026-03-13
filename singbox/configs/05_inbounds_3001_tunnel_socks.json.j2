@@ -1,0 +1,13 @@
+{% if tunnel_config and hconfigs.get('tunnel_mode','disable') != 'disable' %}
+{
+    "inbounds": [
+        {
+            "tag": "tunnel-socks-in",
+            "type": "socks",
+            "listen": "127.0.0.1",
+            "listen_port": 3001,
+            "detour": "TUNNEL"
+        }
+    ]
+}
+{% endif %}

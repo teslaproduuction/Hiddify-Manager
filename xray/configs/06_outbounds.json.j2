@@ -35,6 +35,64 @@
     //     ]
     //   }
     // },
+    {% if tunnel_config and hconfigs.get('tunnel_mode','disable') != 'disable' %}
+    {
+      {% if tunnel_config.protocol == 'vmess' %}
+      "tag": "TUNNEL",
+      "protocol": "vmess",
+      "settings": {
+        "vnext": [{"address": "{{tunnel_config.server}}", "port": {{tunnel_config.port}},
+          "users": [{"id": "{{tunnel_config.uuid}}", "alterId": {{tunnel_config.alter_id}}, "security": "{{tunnel_config.security}}"}]
+        }]
+      }
+      {% elif tunnel_config.protocol == 'vless' %}
+      "tag": "TUNNEL",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [{"address": "{{tunnel_config.server}}", "port": {{tunnel_config.port}},
+          "users": [{"id": "{{tunnel_config.uuid}}", "encryption": "none"
+            {%if tunnel_config.flow%},"flow": "{{tunnel_config.flow}}"{%endif%}
+          }]
+        }]
+      }
+      {% elif tunnel_config.protocol == 'trojan' %}
+      "tag": "TUNNEL",
+      "protocol": "trojan",
+      "settings": {
+        "servers": [{"address": "{{tunnel_config.server}}", "port": {{tunnel_config.port}}, "password": "{{tunnel_config.password}}"}]
+      }
+      {% elif tunnel_config.protocol == 'ss' %}
+      "tag": "TUNNEL",
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [{"address": "{{tunnel_config.server}}", "port": {{tunnel_config.port}},
+          "method": "{{tunnel_config.method}}", "password": "{{tunnel_config.password}}"}]
+      }
+      {% else %}
+      // hysteria2 not supported in Xray core — TUNNEL is a no-op freedom fallback
+      "tag": "TUNNEL",
+      "protocol": "freedom"
+      {% endif %}
+      {% if tunnel_config.network != 'tcp' or tunnel_config.tls %}
+      ,"streamSettings": {
+        "network": "{{tunnel_config.network}}"
+        {% if tunnel_config.network == 'ws' %}
+        ,"wsSettings": {"path": "{{tunnel_config.path}}", "headers": {"Host": "{{tunnel_config.host}}"}}
+        {% elif tunnel_config.network == 'grpc' %}
+        ,"grpcSettings": {"serviceName": "{{tunnel_config.path}}"}
+        {% endif %}
+        {% if tunnel_config.tls %}
+        ,"security": "tls"
+        ,"tlsSettings": {
+          "serverName": "{{tunnel_config.sni}}"
+          {%if tunnel_config.fp%},"fingerprint": "{{tunnel_config.fp}}"{%endif%}
+          {%if tunnel_config.insecure%},"allowInsecure": true{%endif%}
+        }
+        {% endif %}
+      }
+      {% endif %}
+    },
+    {% endif %}
     {
       "protocol": "blackhole",
       "tag": "blackhole"

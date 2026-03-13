@@ -5,6 +5,11 @@
     "domainMatcher":"hybrid",
     
       "rules": [
+        {% if tunnel_config and hconfigs.get('tunnel_mode','disable') != 'disable' %}
+        {
+          "type": "field", "inboundTag": ["tunnel-socks-in"], "outboundTag": "TUNNEL"
+        },
+        {% endif %}
         {
           "type":"field",
           "outboundTag": "freedom",
@@ -21,9 +26,46 @@
         { //block quic
           "type": "field", "port": 443, "network": "udp", "outboundTag": "blackhole"
         },
+        {% if tunnel_config and hconfigs.get('tunnel_mode','disable') != 'disable' and hconfigs.get('tunnel_mode') != 'all' %}
+        {
+            "type": "field", "outboundTag": "TUNNEL",
+            {% if hconfigs['country'] in ['zh','cn'] %}
+              "ip": ["geoip:cn"]
+            {% elif hconfigs['country'] == 'ir' %}
+              "ip": ["geoip:ir"]
+            {% elif hconfigs['country'] == 'ru' %}
+              "ip": ["geoip:ru"]
+            {% else %}
+              "ip": ["geoip:cn"]
+            {% endif %}
+        },
+        {
+            "type": "field", "outboundTag": "TUNNEL",
+            {% if hconfigs['country'] in ['zh','cn'] %}
+              "domain": ["geosite:cn","tld-cn"]
+            {% elif hconfigs['country'] == 'ir' %}
+              "domain": ["tld-ir"]
+            {% elif hconfigs['country'] == 'ru' %}
+              "domain": ["tld-ru"]
+            {% else %}
+              "domain": ["geosite:cn","tld-cn"]
+            {% endif %}
+        },
+        {
+            "type":"field", "outboundTag": "TUNNEL",
+            "domain":[
+                "geosite:google","geosite:netflix","geosite:spotify","geosite:nvidia",
+                "geosite:bytedance","geosite:tiktok","geosite:unity","geosite:reddit","geosite:openai",
+                "domain:openai.com","domain:ip.gs","domain:ipinfo.io"
+                {%for d in hconfigs.get('tunnel_sites','').split('\n') if d.strip()%}
+                ,"domain:{{d.strip()}}"
+                {%endfor%}
+            ]
+        },
+        {% endif %}
         {% if hconfigs['warp_mode'] != 'all' %}
         {
-            "type": "field", 
+            "type": "field",
             "outboundTag": {% if hconfigs['warp_mode'] == 'disable' %}"forbidden_sites"{% else %}"WARP"{% endif %},
             {% if hconfigs['country'] in ['zh','cn'] %}
               "ip": ["geoip:cn"]
@@ -117,7 +159,7 @@
         {
           "type": "field",
           "port": "0-65535",
-          "outboundTag": {% if hconfigs['warp_mode'] == 'all' %}"WARP"{% else %}"freedom"{% endif %}
+          "outboundTag": {% if tunnel_config and hconfigs.get('tunnel_mode') == 'all' %}"TUNNEL"{% elif hconfigs['warp_mode'] == 'all' %}"WARP"{% else %}"freedom"{% endif %}
         }
       ]
     

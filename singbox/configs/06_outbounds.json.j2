@@ -21,8 +21,38 @@
     //   "server_port":3000
     // },
     //hiddify!!!!_warp
-    
-    
-    
+
+    {% if tunnel_config and hconfigs.get('tunnel_mode','disable') != 'disable' %}
+    ,{
+      "tag": "TUNNEL",
+      "type": "{{tunnel_config.protocol if tunnel_config.protocol != 'ss' else 'shadowsocks'}}",
+      "server": "{{tunnel_config.server}}",
+      "server_port": {{tunnel_config.port}}
+      {% if tunnel_config.protocol in ['vless','vmess'] %}
+      ,"uuid": "{{tunnel_config.uuid}}"
+      {%if tunnel_config.protocol == 'vmess'%},"alter_id": {{tunnel_config.alter_id}}, "security": "{{tunnel_config.security}}"{%endif%}
+      {%if tunnel_config.flow%},"flow": "{{tunnel_config.flow}}"{%endif%}
+      {% elif tunnel_config.protocol in ['trojan','hysteria2'] %}
+      ,"password": "{{tunnel_config.password}}"
+      {%if tunnel_config.obfs%},"obfs": {"type": "{{tunnel_config.obfs}}", "password": "{{tunnel_config.obfs_password}}"}{%endif%}
+      {% elif tunnel_config.protocol == 'ss' %}
+      ,"method": "{{tunnel_config.method}}"
+      ,"password": "{{tunnel_config.password}}"
+      {% endif %}
+      {% if tunnel_config.tls and tunnel_config.protocol != 'hysteria2' %}
+      ,"tls": {
+        "enabled": true,
+        "server_name": "{{tunnel_config.sni}}"
+        {%if tunnel_config.insecure%},"insecure": true{%endif%}
+        {%if tunnel_config.fp%},"utls": {"enabled": true, "fingerprint": "{{tunnel_config.fp}}"}{%endif%}
+      }
+      {% endif %}
+      {% if tunnel_config.network == 'ws' %}
+      ,"transport": {"type": "ws", "path": "{{tunnel_config.path}}", "headers": {"Host": "{{tunnel_config.host}}"}}
+      {% elif tunnel_config.network == 'grpc' %}
+      ,"transport": {"type": "grpc", "service_name": "{{tunnel_config.path}}"}
+      {% endif %}
+    }
+    {% endif %}
   ]
 }
